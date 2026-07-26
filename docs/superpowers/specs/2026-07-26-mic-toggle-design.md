@@ -50,8 +50,9 @@ what is ~300 lines of Win32 calls.
   does not poll for changes made in other apps between presses. (Accepted
   limitation — next F8 press re-syncs from the real state by reading before
   flipping.)
-- **Icons:** two embedded icons (normal / muted-red), compiled into the exe
-  as resources.
+- **Icons:** two simple icons (green circle = live, red circle = muted)
+  generated at runtime with GDI (`CreateIconIndirect`) — no binary `.ico`
+  assets or resource-compilation step needed.
 - **Single instance:** named mutex (`CreateMutexW`); if it already exists,
   exit silently.
 - **Errors:**
