@@ -7,8 +7,8 @@ use windows::Win32::UI::Shell::{
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     AppendMenuW, CreateIconIndirect, CreatePopupMenu, DestroyIcon, DestroyMenu, GetCursorPos,
-    SetForegroundWindow, TrackPopupMenu, HICON, ICONINFO, MF_STRING, TPM_NONOTIFY,
-    TPM_RETURNCMD, TPM_RIGHTBUTTON, WM_APP,
+    SetForegroundWindow, TrackPopupMenu, HICON, ICONINFO, MF_STRING, TPM_NONOTIFY, TPM_RETURNCMD,
+    TPM_RIGHTBUTTON, WM_APP,
 };
 
 /// Message posted to the window for tray icon events.
@@ -106,7 +106,9 @@ pub fn remove(hwnd: HWND) {
 /// (IDM_EXIT) or 0 if dismissed.
 pub fn show_menu(hwnd: HWND) -> u32 {
     unsafe {
-        let Ok(menu) = CreatePopupMenu() else { return 0 };
+        let Ok(menu) = CreatePopupMenu() else {
+            return 0;
+        };
         let _ = AppendMenuW(menu, MF_STRING, IDM_EXIT as usize, w!("Exit"));
         let mut pt = POINT::default();
         let _ = GetCursorPos(&mut pt);

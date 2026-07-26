@@ -1,9 +1,9 @@
 #![cfg_attr(not(test), windows_subsystem = "windows")]
 
 mod audio;
+mod config;
 mod hotkey;
 mod tray;
-mod config;
 
 use windows::core::{w, PCWSTR};
 use windows::Win32::Foundation::{
@@ -14,9 +14,9 @@ use windows::Win32::System::Diagnostics::Debug::Beep;
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::System::Threading::CreateMutexW;
 use windows::Win32::UI::WindowsAndMessaging::{
-    CreateWindowExW, DefWindowProcW, DispatchMessageW, GetMessageW, MessageBoxW,
-    PostQuitMessage, RegisterClassW, TranslateMessage, CW_USEDEFAULT, MB_ICONERROR, MB_ICONWARNING, MB_OK,
-    MSG, WINDOW_EX_STYLE, WINDOW_STYLE, WM_DESTROY, WM_HOTKEY, WM_RBUTTONUP, WNDCLASSW,
+    CreateWindowExW, DefWindowProcW, DispatchMessageW, GetMessageW, MessageBoxW, PostQuitMessage,
+    RegisterClassW, TranslateMessage, CW_USEDEFAULT, MB_ICONERROR, MB_ICONWARNING, MB_OK, MSG,
+    WINDOW_EX_STYLE, WINDOW_STYLE, WM_DESTROY, WM_HOTKEY, WM_RBUTTONUP, WNDCLASSW,
 };
 
 const WINDOW_CLASS: PCWSTR = w!("mic-toggle-window");

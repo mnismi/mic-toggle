@@ -77,7 +77,10 @@ pub fn parse_hotkey(s: &str) -> Result<Hotkey, String> {
         }
         modifiers = HOT_KEY_MODIFIERS(modifiers.0 | flag.0);
     }
-    Ok(Hotkey { modifiers, vk: parse_key(key_token[0])? })
+    Ok(Hotkey {
+        modifiers,
+        vk: parse_key(key_token[0])?,
+    })
 }
 
 fn parse_key(t: &str) -> Result<u32, String> {
@@ -123,7 +126,13 @@ mod tests {
     #[test]
     fn plain_f8() {
         let hk = parse_hotkey("F8").unwrap();
-        assert_eq!(hk, Hotkey { modifiers: HOT_KEY_MODIFIERS(0), vk: 0x77 });
+        assert_eq!(
+            hk,
+            Hotkey {
+                modifiers: HOT_KEY_MODIFIERS(0),
+                vk: 0x77
+            }
+        );
     }
 
     #[test]
@@ -209,8 +218,10 @@ mod tests {
 
     #[test]
     fn read_config_invalid_utf8_is_distinct_error() {
-        let path = std::env::temp_dir()
-            .join(format!("mic-toggle-test-invalid-utf8-{}.toml", std::process::id()));
+        let path = std::env::temp_dir().join(format!(
+            "mic-toggle-test-invalid-utf8-{}.toml",
+            std::process::id()
+        ));
         // 0xFF is never valid at the start of a UTF-8 byte sequence.
         std::fs::write(&path, [0xFF, 0xFE, b'h', b'i']).unwrap();
         let result = read_config(&path);
