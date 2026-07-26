@@ -2,6 +2,10 @@
 name = "mic-toggle"
 version = "0.1.0"
 edition = "2021"
+description = "Mute/unmute the default microphone with a global hotkey — tiny native Windows tray app"
+repository = "https://github.com/mnismi/mic-toggle"
+license = "MIT"
+readme = "README.md"
 
 [dependencies.windows]
 version = "0.58"
