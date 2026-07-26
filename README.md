@@ -1,10 +1,24 @@
 # mic-toggle
 
-Press **F8** to mute/unmute the default microphone. A tray icon shows the
+Press **F8** (configurable, see below) to mute/unmute the default microphone. A tray icon shows the
 state (green = live, red = muted); a low beep means muted, a higher beep
 means unmuted. Right-click the tray icon → **Exit** to quit.
 
 Single native exe — no .NET runtime, no AutoHotkey.
+
+## Custom hotkey (optional)
+
+Create `mic-toggle.toml` next to `mic-toggle.exe`:
+
+    hotkey = "Ctrl+Shift+F8"
+
+Format: optional modifiers (`Ctrl`, `Alt`, `Shift`, `Win`) joined with `+`,
+then one key — `A`–`Z`, `0`–`9`, `F1`–`F24`, or `Space`, `Tab`, `Pause`,
+`ScrollLock`, `Insert`, `Delete`, `Home`, `End`, `PageUp`, `PageDown`,
+`Backspace`. Case doesn't matter. Restart the app after editing.
+
+No file (or no `hotkey` line that parses) means the default **F8**; an
+invalid value shows a warning and falls back to F8.
 
 ## Build
 
