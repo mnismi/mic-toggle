@@ -34,8 +34,10 @@ mod tests {
     use windows::Win32::System::Com::{CoInitializeEx, COINIT_APARTMENTTHREADED};
 
     // NOTE: this test touches the real default microphone (brief mute blip)
-    // and requires a capture device to be present.
+    // and requires a capture device to be present, so it cannot run on CI.
+    // Run locally with: cargo test -- --include-ignored
     #[test]
+    #[ignore = "requires a real audio capture device"]
     fn toggle_flips_and_restores_mute_state() {
         unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED).ok().unwrap() };
 
@@ -50,6 +52,9 @@ mod tests {
         );
 
         let restored = toggle_mute().expect("second toggle");
-        assert_eq!(restored, before, "second toggle must restore original state");
+        assert_eq!(
+            restored, before,
+            "second toggle must restore original state"
+        );
     }
 }
