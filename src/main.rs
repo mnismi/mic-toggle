@@ -3,6 +3,7 @@
 mod audio;
 mod hotkey;
 mod tray;
+mod config;
 
 use windows::core::{w, PCWSTR};
 use windows::Win32::Foundation::{
