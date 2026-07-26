@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - name: Format
+        run: cargo fmt --check
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+      - name: Test
+        run: cargo test
+
+  # Rolling release: every push to main rebuilds the exe and republishes it
+  # under the fixed tag `latest`, so the download URL never changes.
+  release:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: check
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: rolling-release
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --release
+      - name: Move latest tag to this commit
+        shell: bash
+        run: |
+          git tag -f latest
+          git push origin latest --force
+      - name: Update rolling release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notes="Automated build of ${GITHUB_SHA::7} ($(date -u +%Y-%m-%d))."
+          if gh release view latest --json id > /dev/null 2>&1; then
+            gh release edit latest --title "Latest build" --notes "$notes"
+            gh release upload latest target/release/mic-toggle.exe --clobber
+          else
+            gh release create latest target/release/mic-toggle.exe \
+              --title "Latest build" --notes "$notes"
+          fi
