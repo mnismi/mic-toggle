@@ -18,10 +18,12 @@ and put it anywhere you like, then run it. No installer, no dependencies.
 > **Note:** the exe is not code-signed, so Windows SmartScreen may warn on
 > first run. Click *More info* → *Run anyway*, or build from source below.
 
-### Start with Windows (optional)
+### Start with Windows
 
-Press `Win+R`, run `shell:startup`, and drop a shortcut to
-`mic-toggle.exe` in the folder that opens.
+Enabled by default: the first launch registers the app to start when you
+log in (a per-user registry entry — no admin rights needed). Toggle it
+anytime via right-click on the tray icon → **Start with Windows**; your
+choice is remembered.
 
 ## Custom hotkey (optional)
 
@@ -52,6 +54,8 @@ The exe lands at `target\release\mic-toggle.exe`. Copy it anywhere you like.
   hotkey press; if you mute the mic in another app, the icon catches up on
   the next press.
 - Launching a second copy does nothing (single-instance).
+- If you move `mic-toggle.exe`, the start-with-Windows entry updates to
+  the new location the next time you run it.
 
 ## Contributing
 

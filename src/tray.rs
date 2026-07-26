@@ -7,14 +7,16 @@ use windows::Win32::UI::Shell::{
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     AppendMenuW, CreateIconIndirect, CreatePopupMenu, DestroyIcon, DestroyMenu, GetCursorPos,
-    SetForegroundWindow, TrackPopupMenu, HICON, ICONINFO, MF_STRING, TPM_NONOTIFY, TPM_RETURNCMD,
-    TPM_RIGHTBUTTON, WM_APP,
+    SetForegroundWindow, TrackPopupMenu, HICON, ICONINFO, MF_CHECKED, MF_SEPARATOR, MF_STRING,
+    MF_UNCHECKED, TPM_NONOTIFY, TPM_RETURNCMD, TPM_RIGHTBUTTON, WM_APP,
 };
 
 /// Message posted to the window for tray icon events.
 pub const WM_TRAYICON: u32 = WM_APP + 1;
 /// Command id returned by `show_menu` when Exit is chosen.
 pub const IDM_EXIT: u32 = 100;
+/// Command id returned by `show_menu` when "Start with Windows" is chosen.
+pub const IDM_AUTOSTART: u32 = 101;
 
 const TRAY_ID: u32 = 1;
 const LIVE_RGB: u32 = 0x003F_B950; // green
@@ -103,12 +105,24 @@ pub fn remove(hwnd: HWND) {
 }
 
 /// Show the right-click menu at the cursor; returns the chosen command id
-/// (IDM_EXIT) or 0 if dismissed.
-pub fn show_menu(hwnd: HWND) -> u32 {
+/// (IDM_EXIT, IDM_AUTOSTART) or 0 if dismissed.
+pub fn show_menu(hwnd: HWND, autostart_enabled: bool) -> u32 {
     unsafe {
         let Ok(menu) = CreatePopupMenu() else {
             return 0;
         };
+        let check = if autostart_enabled {
+            MF_CHECKED
+        } else {
+            MF_UNCHECKED
+        };
+        let _ = AppendMenuW(
+            menu,
+            MF_STRING | check,
+            IDM_AUTOSTART as usize,
+            w!("Start with Windows"),
+        );
+        let _ = AppendMenuW(menu, MF_SEPARATOR, 0, None);
         let _ = AppendMenuW(menu, MF_STRING, IDM_EXIT as usize, w!("Exit"));
         let mut pt = POINT::default();
         let _ = GetCursorPos(&mut pt);

@@ -1,6 +1,7 @@
 #![cfg_attr(not(test), windows_subsystem = "windows")]
 
 mod audio;
+mod autostart;
 mod config;
 mod hotkey;
 mod tray;
@@ -89,6 +90,7 @@ unsafe fn run() -> windows::core::Result<()> {
     };
     hotkey::register(hwnd, hk)?;
     tray::add(hwnd, audio::is_muted()?)?;
+    autostart::ensure_default();
 
     let mut msg = MSG::default();
     while GetMessageW(&mut msg, None, 0, 0).as_bool() {
@@ -108,8 +110,18 @@ extern "system" fn wndproc(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM)
             LRESULT(0)
         }
         tray::WM_TRAYICON => {
-            if lparam.0 as u32 == WM_RBUTTONUP && tray::show_menu(hwnd) == tray::IDM_EXIT {
-                unsafe { PostQuitMessage(0) };
+            if lparam.0 as u32 == WM_RBUTTONUP {
+                match tray::show_menu(hwnd, autostart::is_enabled()) {
+                    tray::IDM_EXIT => unsafe { PostQuitMessage(0) },
+                    tray::IDM_AUTOSTART => {
+                        if autostart::is_enabled() {
+                            autostart::disable();
+                        } else {
+                            let _ = autostart::enable();
+                        }
+                    }
+                    _ => {}
+                }
             }
             LRESULT(0)
         }
