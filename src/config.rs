@@ -1,5 +1,6 @@
 //! Optional `mic-toggle.toml` next to the exe: `hotkey = "Ctrl+Shift+F8"`.
 
+use std::path::Path;
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     HOT_KEY_MODIFIERS, MOD_ALT, MOD_CONTROL, MOD_SHIFT, MOD_WIN,
 };
@@ -16,14 +17,26 @@ pub fn load() -> Result<Option<Hotkey>, String> {
         Ok(exe) => exe.with_file_name("mic-toggle.toml"),
         Err(_) => return Ok(None),
     };
-    match std::fs::read_to_string(&path) {
-        Ok(text) => parse_config(&text).map(Some),
-        Err(_) => Ok(None),
+    match read_config(&path)? {
+        Some(text) => parse_config(&text).map(Some),
+        None => Ok(None),
+    }
+}
+
+/// Read the config file. `Ok(None)`: file does not exist. `Err`: it exists but
+/// couldn't be read (e.g. invalid UTF-8, permission denied) — distinct from
+/// "missing", since silently falling back to the default would hide a real problem.
+fn read_config(path: &Path) -> Result<Option<String>, String> {
+    match std::fs::read_to_string(path) {
+        Ok(text) => Ok(Some(text)),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(e) => Err(format!("cannot read config: {e}")),
     }
 }
 
 /// Parse the whole config text: find the `hotkey = "..."` line.
 fn parse_config(text: &str) -> Result<Hotkey, String> {
+    let text = text.strip_prefix('\u{feff}').unwrap_or(text);
     for line in text.lines() {
         let line = line.trim();
         if let Some(rest) = line.strip_prefix("hotkey") {
@@ -178,5 +191,30 @@ mod tests {
     fn config_without_hotkey_line_is_error() {
         assert!(parse_config("# nothing here\n").is_err());
         assert!(parse_config("").is_err());
+    }
+
+    #[test]
+    fn config_bom_prefix_is_stripped() {
+        let hk = parse_config("\u{feff}hotkey = \"F8\"\n").unwrap();
+        assert_eq!(hk.vk, 0x77);
+    }
+
+    #[test]
+    fn read_config_missing_file_returns_none() {
+        let path = std::env::temp_dir().join("mic-toggle-test-missing-config.toml");
+        // Guard against a stray leftover from a previous failed run.
+        let _ = std::fs::remove_file(&path);
+        assert!(read_config(&path).unwrap().is_none());
+    }
+
+    #[test]
+    fn read_config_invalid_utf8_is_distinct_error() {
+        let path = std::env::temp_dir()
+            .join(format!("mic-toggle-test-invalid-utf8-{}.toml", std::process::id()));
+        // 0xFF is never valid at the start of a UTF-8 byte sequence.
+        std::fs::write(&path, [0xFF, 0xFE, b'h', b'i']).unwrap();
+        let result = read_config(&path);
+        let _ = std::fs::remove_file(&path);
+        assert!(result.is_err());
     }
 }
