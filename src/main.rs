@@ -15,7 +15,7 @@ use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::System::Threading::CreateMutexW;
 use windows::Win32::UI::WindowsAndMessaging::{
     CreateWindowExW, DefWindowProcW, DispatchMessageW, GetMessageW, MessageBoxW,
-    PostQuitMessage, RegisterClassW, TranslateMessage, CW_USEDEFAULT, MB_ICONERROR, MB_OK,
+    PostQuitMessage, RegisterClassW, TranslateMessage, CW_USEDEFAULT, MB_ICONERROR, MB_ICONWARNING, MB_OK,
     MSG, WINDOW_EX_STYLE, WINDOW_STYLE, WM_DESTROY, WM_HOTKEY, WM_RBUTTONUP, WNDCLASSW,
 };
 
@@ -71,7 +71,23 @@ unsafe fn run() -> windows::core::Result<()> {
         None,
     )?;
 
-    hotkey::register(hwnd)?;
+    let hk = match config::load() {
+        Ok(Some(hk)) => hk,
+        Ok(None) => hotkey::DEFAULT,
+        Err(msg) => {
+            let text: Vec<u16> = format!("mic-toggle.toml: {msg}\nFalling back to F8.\0")
+                .encode_utf16()
+                .collect();
+            MessageBoxW(
+                None,
+                PCWSTR(text.as_ptr()),
+                w!("mic-toggle"),
+                MB_OK | MB_ICONWARNING,
+            );
+            hotkey::DEFAULT
+        }
+    };
+    hotkey::register(hwnd, hk)?;
     tray::add(hwnd, audio::is_muted()?)?;
 
     let mut msg = MSG::default();

@@ -1,15 +1,29 @@
+use crate::config::Hotkey;
 use windows::core::Result;
 use windows::Win32::Foundation::HWND;
 use windows::Win32::UI::Input::KeyboardAndMouse::{
-    RegisterHotKey, UnregisterHotKey, MOD_NOREPEAT, VK_F8,
+    RegisterHotKey, UnregisterHotKey, HOT_KEY_MODIFIERS, MOD_NOREPEAT, VK_F8,
 };
 
 /// Identifier delivered in WM_HOTKEY's wParam.
 pub const HOTKEY_ID: i32 = 1;
 
-/// Register F8 (no modifiers, no key-repeat) as a global hotkey for `hwnd`.
-pub fn register(hwnd: HWND) -> Result<()> {
-    unsafe { RegisterHotKey(hwnd, HOTKEY_ID, MOD_NOREPEAT, VK_F8.0 as u32) }
+/// Used when there is no config file: plain F8.
+pub const DEFAULT: Hotkey = Hotkey {
+    modifiers: HOT_KEY_MODIFIERS(0),
+    vk: VK_F8.0 as u32,
+};
+
+/// Register `hk` (plus no-key-repeat) as a global hotkey for `hwnd`.
+pub fn register(hwnd: HWND, hk: Hotkey) -> Result<()> {
+    unsafe {
+        RegisterHotKey(
+            hwnd,
+            HOTKEY_ID,
+            HOT_KEY_MODIFIERS(hk.modifiers.0 | MOD_NOREPEAT.0),
+            hk.vk,
+        )
+    }
 }
 
 pub fn unregister(hwnd: HWND) {
@@ -21,15 +35,20 @@ pub fn unregister(hwnd: HWND) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::parse_hotkey;
 
     #[test]
-    fn f8_can_be_registered_and_unregistered() {
+    fn default_and_combo_can_be_registered_and_unregistered() {
         // A null HWND registers a thread-level hotkey — enough to prove
         // registration works without creating a window.
-        register(HWND::default()).expect("F8 should be free to register");
+        register(HWND::default(), DEFAULT).expect("F8 should be free to register");
         unregister(HWND::default());
         // Re-registering only succeeds if unregister actually released it.
-        register(HWND::default()).expect("re-register after unregister");
+        register(HWND::default(), DEFAULT).expect("re-register after unregister");
+        unregister(HWND::default());
+
+        let combo = parse_hotkey("Ctrl+Shift+F8").expect("valid combo");
+        register(HWND::default(), combo).expect("Ctrl+Shift+F8 should register");
         unregister(HWND::default());
     }
 }
